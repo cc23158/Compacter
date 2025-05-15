@@ -64,19 +64,22 @@ void enqueue(PriorityQueue* pq, NodePtr node)
 static void heapifyUp(PriorityQueue* pq, U8 index)
 {
     // verifica o limite da fila e se
-    // é necessário trocar os nodos de posição
+    // a frequência do pai é maior que a do filho
     if(index != 0 && pq->data[(index - 1) / 2]->frequency > pq->data[index]->frequency)
     {
+        // troca os ponteiros dos nodos pai e filho usando uma busca binária
         swap(&pq->data[(index - 1) / 2], &pq->data[index]);
-        heapifyUp(pq, (index - 1) / 2)
+
+        // faz a verificação para o restante da fila
+        heapifyUp(pq, (index - 1) / 2);
     }
 }
 
 static void heapifyDown(PriorityQueue* pq, U8 index)
 {
     U8 smallest = index;
-    U8 left = 2 * index + 1;
-    U8 right = 2 * index + 2;
+    U8 left = 2 * index + 1;  // filho esquerdo
+    U8 right = 2 * index + 2; // filho direito
 
     if (left < pq->size && pq->data[left]->frequency < pq->data[smallest]->frequency)
         smallest = left;
@@ -94,8 +97,8 @@ NodePtr dequeue(PriorityQueue* pq)
 {
     if(!pq->size) { return NULL; }
 
-    U8 item = pq->data[0];
-    pq->data[0] = pq->data[--pq->size];
-    heapifyDown(pq, 0);
-    return item;
+    NodePtr item = pq->data[0];         // armazena o elemento com menor frequência
+    pq->data[0] = pq->data[--pq->size]; // troca o primeiro elemento com o último
+    heapifyDown(pq, 0);                 // rearranja a fila
+    return item;                        // first-in, first-out
 }

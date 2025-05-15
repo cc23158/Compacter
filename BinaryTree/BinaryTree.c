@@ -57,7 +57,7 @@ boolean removeNode(BinaryTree* bt, element e)
 {
     // se não há árvore, não tem elementos para remover
     // se na árvore não existir o nodo, não tem como removê-lo
-    if(!bt || bt->root == NULL || !existNode(bt, Node)) { return false; }
+    if(!bt || bt->root == NULL || !existNode(bt, e)) { return false; }
     bt->root = removeNodeRec(bt->root, bt->comp, e);
     return true;
 }
@@ -162,7 +162,7 @@ NodePtr mergeNodes(NodePtr left, NodePtr right)
 // compara chars
 I8 compareByChar(element a, element b)
 {
-    return (*(char*)charA - *(char*)charB);
+    return (*(char*)a - *(char*)b);
 }
 
 // compara nodos(frequência)

@@ -3,7 +3,7 @@
 
 #include "myTypes.h"
 
-typedef *void element;
+typedef void* element;
 typedef I8 (*CompareFunc)(element a, element b);
 
 typedef struct Node {
@@ -27,6 +27,6 @@ void destroyQueue(PriorityQueue* pq);
 boolean isEmpty(PriorityQueue* pq);
 boolean isFull(PriorityQueue* pq);
 void enqueue(PriorityQueue* pq, NodePtr node);
-NodePtr extractMin(PriorityQueue* pq);
+NodePtr dequeue(PriorityQueue* pq);
 
 #endif
