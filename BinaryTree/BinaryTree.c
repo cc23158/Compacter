@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "BinaryTree.h"
 
-static NodePtr addNodeRec(NodePtr node, CompareFunc comp, element e, U8 freq);
+static NodePtr addNodeRec(NodePtr node, CompareFunc comp, element e, U64 freq);
 static NodePtr removeNodeRec(NodePtr node, CompareFunc comp, element e);
 static NodePtr minValueNode(NodePtr node);
 
@@ -16,10 +16,10 @@ void newTree(BinaryTree* bt, CompareFunc comp)
 }
 
 // cria um novo nodo
-NodePtr newNode(element e, U8 freq)
+NodePtr newNode(element e, U64 freq)
 {
     // aloca memória para o novo nodo
-    NodePtr new = (NodePtr)malloc(sizeof(Node));
+    NodePtr new = (NodePtr)malloc(sizeof(NodeT));
     if(!new) { return NULL; } // verifica se a memória do nodo foi alocada com sucesso
 
     new->info = e;
@@ -30,7 +30,7 @@ NodePtr newNode(element e, U8 freq)
     return new;
 }
 
-void addNode(BinaryTree* bt, element e, U8 freq)
+void addNode(BinaryTree* bt, element e, U64 freq)
 {
     // se já existe o nodo, não o insere
     // se há árvore para inserir, não tem como inseri-lo
@@ -38,7 +38,7 @@ void addNode(BinaryTree* bt, element e, U8 freq)
     bt->root = addNodeRec(bt->root, bt->comp, e, freq);
 }
 
-static NodePtr addNodeRec(NodePtr node, CompareFunc comp, element e, U8 freq)
+static NodePtr addNodeRec(NodePtr node, CompareFunc comp, element e, U64 freq)
 {
     // se chegou ao próximo de uma folha, pode criar nodo
     if(node == NULL) { return newNode(e, freq); }
@@ -148,7 +148,7 @@ NodePtr mergeNodes(NodePtr left, NodePtr right)
 {
     // aloca memória para o novo nodo e verifica se
     // a memória foi alocada com sucesso
-    NodePtr new = (NodePtr)malloc(sizeof(Node));
+    NodePtr new = (NodePtr)malloc(sizeof(NodeT));
     if(!new) { return NULL; }
 
     new->info = NULL;
@@ -168,7 +168,7 @@ I8 compareByChar(element a, element b)
 // compara nodos(frequência)
 I8 compareByFreq(element a, element b)
 {
-    Node* nodeA = (Node*)a;
-    Node* nodeB = (Node*)b;
+    NodeT* nodeA = (NodeT*)a;
+    NodeT* nodeB = (NodeT*)b;
     return (nodeA->frequency - nodeB->frequency);
 }

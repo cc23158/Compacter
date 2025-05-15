@@ -4,8 +4,8 @@
 #include "PriorityQueue.h"
 
 static void swap(NodePtr* a, NodePtr* b);
-static void heapifyUp(PriorityQueue* pq, U8 index);
-static void heapifyDown(PriorityQueue* pq, U8 index);
+static void heapifyUp(PriorityQueue* pq, U64 index);
+static void heapifyDown(PriorityQueue* pq, U64 index);
 
 // troca os ponteiros de 2 nodos
 static void swap(NodePtr* a, NodePtr* b)
@@ -15,7 +15,7 @@ static void swap(NodePtr* a, NodePtr* b)
     *b = temp;
 }
 
-PriorityQueue* createQueue(U8 capacity)
+PriorityQueue* createQueue(U64 capacity)
 {
     // aloca memória para a fila de prioridade e verifica
     // se a memória foi alocada com sucesso
@@ -61,7 +61,7 @@ void enqueue(PriorityQueue* pq, NodePtr node)
     heapifyUp(pq, pq->size - 1);
 }
 
-static void heapifyUp(PriorityQueue* pq, U8 index)
+static void heapifyUp(PriorityQueue* pq, U64 index)
 {
     // verifica o limite da fila e se
     // a frequência do pai é maior que a do filho
@@ -75,11 +75,11 @@ static void heapifyUp(PriorityQueue* pq, U8 index)
     }
 }
 
-static void heapifyDown(PriorityQueue* pq, U8 index)
+static void heapifyDown(PriorityQueue* pq, U64 index)
 {
-    U8 smallest = index;
-    U8 left = 2 * index + 1;  // filho esquerdo
-    U8 right = 2 * index + 2; // filho direito
+    U64 smallest = index;
+    U64 left = 2 * index + 1;  // filho esquerdo
+    U64 right = 2 * index + 2; // filho direito
 
     if (left < pq->size && pq->data[left]->frequency < pq->data[smallest]->frequency)
         smallest = left;

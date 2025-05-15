@@ -1,19 +1,19 @@
-#ifndef BINARY_TREE
-#define BINARY_TREE
+#ifndef BINARY_TREE_H
+#define BINARY_TREE_H
 
-#include "myTypes.h"
+#include "../myTypes.h"
 
 typedef void* element;
-typedef I8 (*CompareFunc)(element a, element b);
 
-typedef struct Node {
+typedef struct NodeT {
     element info;
-    U8 frequency;
-    struct Node* left;
-    struct Node* right;
-} Node;
+    U64 frequency;
+    struct NodeT* left;
+    struct NodeT* right;
+} NodeT;
 
-typedef Node* NodePtr;
+typedef NodeT* NodePtr;
+typedef I8 (*CompareFunc)(element a, element b);
 
 typedef struct {
     NodePtr root;
@@ -21,8 +21,8 @@ typedef struct {
 } BinaryTree;
 
 void newTree(BinaryTree* bt, CompareFunc comp);
-NodePtr newNode(element e, U8 freq);
-void addNode(BinaryTree* bt, element e, U8 freq);
+NodePtr newNode(element e, U64 freq);
+void addNode(BinaryTree* bt, element e, U64 freq);
 boolean removeNode(BinaryTree* bt, element e);
 boolean existNode(BinaryTree* bt, element e);
 NodePtr mergeNodes(NodePtr left, NodePtr right);
