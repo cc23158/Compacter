@@ -1,1 +1,3 @@
-ABCABCAAAA
+Num de bits para considere no último byte.
+Num de bytes diferentes na tabela de frequência.
+Byte -> Frequência
