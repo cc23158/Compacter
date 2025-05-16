@@ -7,12 +7,19 @@ static void swap(NodePtr* a, NodePtr* b);
 static void heapifyUp(PriorityQueue* pq, U64 index);
 static void heapifyDown(PriorityQueue* pq, U64 index);
 
-// troca os ponteiros de 2 nodos
-static void swap(NodePtr* a, NodePtr* b)
+// cria um novo nodo
+NodePtr newNode(U8 character, U64 frequency)
 {
-    NodePtr temp = *a;
-    *a = *b;
-    *b = temp;
+    // aloca memória para o novo nodo
+    NodePtr new = (NodePtr)malloc(sizeof(Node));
+    if(!new) { return NULL; } // verifica se a memória do nodo foi alocada com sucesso
+
+    new->character = character;
+    new->frequency = frequency;
+    new->left = NULL;
+    new->right = NULL;
+
+    return new;
 }
 
 PriorityQueue* createQueue(U64 capacity)
@@ -61,6 +68,24 @@ void enqueue(PriorityQueue* pq, NodePtr node)
     heapifyUp(pq, pq->size - 1);
 }
 
+NodePtr dequeue(PriorityQueue* pq)
+{
+    if(!pq->size) { return NULL; }
+
+    NodePtr item = pq->data[0];         // armazena o elemento com menor frequência
+    pq->data[0] = pq->data[--pq->size]; // troca o primeiro elemento com o último
+    heapifyDown(pq, 0);                 // rearranja a fila
+    return item;                        // first-in, first-out
+}
+
+// troca os ponteiros de 2 nodos
+static void swap(NodePtr* a, NodePtr* b)
+{
+    NodePtr temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
 static void heapifyUp(PriorityQueue* pq, U64 index)
 {
     // verifica o limite da fila e se
@@ -91,14 +116,4 @@ static void heapifyDown(PriorityQueue* pq, U64 index)
         swap(&pq->data[index], &pq->data[smallest]);
         heapifyDown(pq, smallest);
     }
-}
-
-NodePtr dequeue(PriorityQueue* pq)
-{
-    if(!pq->size) { return NULL; }
-
-    NodePtr item = pq->data[0];         // armazena o elemento com menor frequência
-    pq->data[0] = pq->data[--pq->size]; // troca o primeiro elemento com o último
-    heapifyDown(pq, 0);                 // rearranja a fila
-    return item;                        // first-in, first-out
 }

@@ -3,13 +3,12 @@
 #include <string.h>
 #include "myTypes.h"
 #include "PriorityQueue/PriorityQueue.h"
-#include "BinaryTree/BinaryTree.h"
 
 void read(const char *fileName, PriorityQueue* pq);
 
 int main()
 {
-    // criar fila
+    // criar fila e árvore
     PriorityQueue* pq = createQueue(256);
     
     // verifica se a fila foi criada corretamente
@@ -17,15 +16,22 @@ int main()
 
     read("teste.txt", pq);
     
-    // percorre a fila exibindo os nodos
-    while (!isEmpty(pq)) {
+    // percorre a fila
+    while (pq->size > 1) {
         NodePtr node1 = dequeue(pq);
         NodePtr node2 = dequeue(pq);
         
-        NodePtr nodeTree = newNode("", node1->frequency + node2->frequency);
+        // cria novo nodo de árvore com os dois primeiros da fila
+        // e atualiza a árvore e a fila
+        NodePtr newNodeTree = newNode('\0', node1->frequency + node2->frequency);
+        newNodeTree->left = node1;
+        newNodeTree->right = node2;
+
+        enqueue(pq, newNodeTree);
     }
 
     destroyQueue(pq);
+
     return 0;
 }
 
@@ -59,7 +65,7 @@ void read(const char *fileName, PriorityQueue* pq)
             *ptr = (U8)i; // ponteiro para o char
 
             // cria nodo e adiciona na fila
-            NodePtr node = newNode(ptr, frequencies[i]);
+            NodePtr node = newNode(*ptr, frequencies[i]);
             enqueue(pq, node);
         }
     }
