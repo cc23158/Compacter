@@ -9,18 +9,20 @@ void read(const char *fileName, PriorityQueue* pq);
 
 int main()
 {
+    // criar fila
     PriorityQueue* pq = createQueue(256);
-
+    
+    // verifica se a fila foi criada corretamente
     if(!pq) { return 1; }
 
     read("teste.txt", pq);
     
-    // Teste: imprime os bytes e suas frequências
+    // percorre a fila exibindo os nodos
     while (!isEmpty(pq)) {
-        NodePtr node = dequeue(pq);
-        printf("Byte: 0x%02X (%c), Freq: %lu\n", *(unsigned char *)node->info, *(char *)node->info, node->frequency);
-        free(node->info);
-        free(node);
+        NodePtr node1 = dequeue(pq);
+        NodePtr node2 = dequeue(pq);
+        
+        NodePtr nodeTree = newNode("", node1->frequency + node2->frequency);
     }
 
     destroyQueue(pq);
@@ -35,34 +37,30 @@ void read(const char *fileName, PriorityQueue* pq)
     if (file == NULL) { exit(1); }
 
     // vetor de U8
-    U64 frequencies[256] = {0};
+    U8 frequencies[256] = {0};
 
-    unsigned char byte;
+    U8 byte;
     // fseek(f, deslocamento, ptReferencia)
     // SEEK_SET, SEEK_END, SEEK_CUR
     // fread -> retorna um inteiro com a quantidade de bytes lidos
-    while (fread(&byte, sizeof(unsigned char), 1, file) == 1) { frequencies[byte]++; }
+    
+    // faz a leitura de 1 byte / char do arquivo file,
+    // armazena o char lido no endereço da variável byte
+    // e aumenta a frequência desse char no array
+    while (fread(&byte, sizeof(U8), 1, file) == 1) { frequencies[byte]++; }
 
+    // fechar arquivo de leitura
     fclose(file);
 
     for (int i = 0; i < 256; i++) {
+        // verifica se o caracter apareceu no arquivo lido
         if (frequencies[i] > 0) {
-            // Cria cópia do byte como ponteiro (element)
-            unsigned char *ptr = malloc(sizeof(unsigned char));
-            *ptr = (unsigned char)i;
+            U8 *ptr = malloc(sizeof(U8));
+            *ptr = (U8)i; // ponteiro para o char
 
+            // cria nodo e adiciona na fila
             NodePtr node = newNode(ptr, frequencies[i]);
             enqueue(pq, node);
         }
     }
-}
-
-int countChar(char *str, char c)
-{
-  int length = strlen(str);
-  int count = 0;
-  
-  for (int i = 0; i < length; i++) { if (str[i] == c) count++; }
-
-  return count;
 }
