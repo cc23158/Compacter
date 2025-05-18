@@ -3,7 +3,8 @@
 
 #include "../myTypes.h"
 
-typedef struct Node {
+typedef struct Node
+{
     U8 character;  // caracter
     U64 frequency; // quantidades de aparições
     struct Node* left;
