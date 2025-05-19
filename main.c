@@ -12,27 +12,21 @@ Byte -> Frequência
 #include "PriorityQueue/PriorityQueue.h"
 #include "Algorithm/Code.h"
 
-void read(const char *fileName, PriorityQueue* pq);
+PriorityQueue* read(const char *fileName);
+void readFrequencies(const char *fileName, U32 frequencies[256]);
+PriorityQueue* createQueueFromFrequencies(U32 frequencies[256]);
 void buildCodes(NodePtr node, Code* table[256], Code* current);
 
 int main()
 {
-    // criar fila e árvore
-    PriorityQueue* pq = createQueue(256);
-    
-    // verifica se a fila foi criada corretamente
+    PriorityQueue* pq = read("teste.txt");
     if(!pq) { return 1; }
 
-    read("teste.txt", pq);
-    
-    // construção da árvore de Huffman
     while (pq->size > 1)
     {
         NodePtr node1 = dequeue(pq);
         NodePtr node2 = dequeue(pq);
         
-        // cria novo nodo de árvore com os dois primeiros da fila
-        // e atualiza a árvore e a fila
         NodePtr newNodeTree = newNode('\0', node1->frequency + node2->frequency);
         newNodeTree->left = node1;
         newNodeTree->right = node2;
@@ -40,7 +34,7 @@ int main()
         enqueue(pq, newNodeTree);
     }
     
-    Code* tableOfCodes[256] = { NULL };
+    Code* tableOfCodes[256] = {NULL};
     Code currentCode;
     newCode(&currentCode);
 
@@ -65,48 +59,50 @@ int main()
         }
         putchar('\n');
     }
-        
+    
     destroyQueue(pq);
 
     return 0;
 }
 
-void read(const char *fileName, PriorityQueue* pq)
+
+
+PriorityQueue* read(const char *fileName)
 {
-    FILE *file = fopen(fileName, "rb+"); // leitura em modo binário
+    U32 frequencies[256];
+    readFrequencies(fileName, frequencies);
+    return createQueueFromFrequencies(frequencies);
+}
 
-    // se o arquivo não foi aberto com sucesso, não pode ler
-    if (file == NULL) { exit(1); }
-
-    // vetor de U8
-    U8 frequencies[256] = {0};
-
-    U8 byte;
-    // fseek(f, deslocamento, ptReferencia)
-    // SEEK_SET, SEEK_END, SEEK_CUR
-    // fread -> retorna um inteiro com a quantidade de bytes lidos
+void readFrequencies(const char *fileName, U32 frequencies[256])
+{
+    FILE *file = fopen(fileName, "rb+");
+    if (!file) { exit(1); }
     
-    // faz a leitura de 1 byte / char do arquivo file,
-    // armazena o char lido no endereço da variável byte
-    // e aumenta a frequência desse char no array
+    for (int i = 0; i < 256; i++) { frequencies[i] = 0; }
+    U8 byte;
+    
     while (fread(&byte, sizeof(U8), 1, file) == 1) { frequencies[byte]++; }
-
-    // fechar arquivo de leitura
     fclose(file);
+}
 
+PriorityQueue* createQueueFromFrequencies(U32 frequencies[256])
+{
+    PriorityQueue* pq = createQueue(256);
+    if (!pq) { return NULL; }
+    
     for (int i = 0; i < 256; i++)
     {
-        // verifica se o caracter apareceu no arquivo lido
         if (frequencies[i] > 0)
         {
             U8 *ptr = malloc(sizeof(U8));
-            *ptr = (U8)i; // ponteiro para o char
-
-            // cria nodo e adiciona na fila
-            NodePtr node = newNode(*ptr, frequencies[i]);
-            enqueue(pq, node);
+            *ptr = (U8)i;
+            
+            enqueue(pq, newNode(*ptr, frequencies[i]));
         }
     }
+    
+    return pq;
 }
 
 void buildCodes(NodePtr node, Code* table[256], Code* current)
