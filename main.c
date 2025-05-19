@@ -12,15 +12,29 @@ Byte -> Frequência
 #include "PriorityQueue/PriorityQueue.h"
 #include "Algorithm/Code.h"
 
+int doEncode(char *fileName);
+int doDecode(char *fileName);
+
 PriorityQueue* read(const char *fileName);
 void readFrequencies(const char *fileName, U32 frequencies[256]);
 PriorityQueue* createQueueFromFrequencies(U32 frequencies[256]);
 void buildCodes(NodePtr node, Code* table[256], Code* current);
 
-int main()
+int main(int argc, char *argv[])
 {
-    PriorityQueue* pq = read("teste.txt");
-    if(!pq) { return 1; }
+    // <main.c> <encode / decode> <inputFile>
+    // ./Compacter.out encode teste.txt
+    if(argc != 3) { return -1; }
+
+    if(strcmp(argv[1], "encode") == 0) { return doEncode(argv[2]); }
+    else if(strcmp(argv[1], "decode") == 0) { return doDecode(argv[2]); }
+    else { return -1; }
+}
+
+int doEncode(char *fileName)
+{
+    PriorityQueue* pq = read(fileName);
+    if(!pq) { return -1; }
 
     while (pq->size > 1)
     {
@@ -61,11 +75,13 @@ int main()
     }
     
     destroyQueue(pq);
-
     return 0;
 }
 
-
+int doDecode(char *fileName)
+{
+    return 1;
+}
 
 PriorityQueue* read(const char *fileName)
 {

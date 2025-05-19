@@ -1,5 +1,5 @@
 build:
-	gcc main.c PriorityQueue/PriorityQueue.c -o Compacter.out
+	gcc main.c PriorityQueue/PriorityQueue.c Algorithm/Code.c -o Compacter.out
 
 execute:
 	./Compacter.out
