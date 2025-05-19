@@ -15,8 +15,8 @@ Byte -> Frequência
 int doEncode(char *fileName);
 int doDecode(char *fileName);
 
-PriorityQueue* read(const char *fileName);
-void readFrequencies(const char *fileName, U32 frequencies[256]);
+PriorityQueue* read(FILE *file);
+void readFrequencies(FILE *file, U32 frequencies[256]);
 PriorityQueue* createQueueFromFrequencies(U32 frequencies[256]);
 void buildCodes(NodePtr node, Code* table[256], Code* current);
 
@@ -33,7 +33,10 @@ int main(int argc, char *argv[])
 
 int doEncode(char *fileName)
 {
-    PriorityQueue* pq = read(fileName);
+    FILE *file = fopen(fileName, "rb+");
+    if(!file) { return -1; }
+    
+    PriorityQueue* pq = read(file);
     if(!pq) { return -1; }
 
     while (pq->size > 1)
@@ -53,6 +56,10 @@ int doEncode(char *fileName)
     newCode(&currentCode);
 
     buildCodes(dequeue(pq), tableOfCodes, &currentCode);
+    
+    fseek(file, 0, SEEK_SET);
+    
+    
         
     for (int b = 0; b < 256; ++b)
     {
@@ -75,6 +82,7 @@ int doEncode(char *fileName)
     }
     
     destroyQueue(pq);
+    fclose(file);
     return 0;
 }
 
@@ -83,23 +91,19 @@ int doDecode(char *fileName)
     return 1;
 }
 
-PriorityQueue* read(const char *fileName)
+PriorityQueue* read(FILE *file)
 {
     U32 frequencies[256];
-    readFrequencies(fileName, frequencies);
+    readFrequencies(file, frequencies);
     return createQueueFromFrequencies(frequencies);
 }
 
-void readFrequencies(const char *fileName, U32 frequencies[256])
+void readFrequencies(FILE *file, U32 frequencies[256])
 {
-    FILE *file = fopen(fileName, "rb+");
-    if (!file) { exit(1); }
-    
     for (int i = 0; i < 256; i++) { frequencies[i] = 0; }
     U8 byte;
     
     while (fread(&byte, sizeof(U8), 1, file) == 1) { frequencies[byte]++; }
-    fclose(file);
 }
 
 PriorityQueue* createQueueFromFrequencies(U32 frequencies[256])
