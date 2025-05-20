@@ -15,11 +15,14 @@ Byte -> Frequência
 int doEncode(char *fileName);
 int doDecode(char *fileName);
 
-PriorityQueue* read(FILE *file);
+PriorityQueue* read(FILE *file, U64 frequencies[256]);
 void readFrequencies(FILE *file, U64 frequencies[256]);
 PriorityQueue* createQueueFromFrequencies(U64 frequencies[256]);
 NodePtr buildHuffman(PriorityQueue* pq);
 void buildCodes(NodePtr node, Code* table[256], Code* current);
+
+void fileWrite(FILE *file, U64 frequencies[256]);
+void fileRead(FILE *file, U64 frequencies[256]);
 
 int main(int argc, char *argv[])
 {
@@ -39,7 +42,8 @@ int doEncode(char *fileName)
     if(!file) { return -1; }
     
     /* 2. Leitura das frequências dos caracteres + fila de prioridade */
-    PriorityQueue* pq = read(file);
+    U64 frequencies[256];
+    PriorityQueue* pq = read(file, frequencies);
     if(!pq)
     {
         fclose(file);
@@ -105,6 +109,53 @@ int doEncode(char *fileName)
         return -1;
     }
     
+    /* 6. Escrita do cabeçalho */
+    fileWrite(fileOut, frequencies);
+    
+    /* 7. Codificação do arquivo */
+    U8 byte;
+    U8 currentByte = 0;
+    int bitCount = 0;
+    int lastByteBits = 0; // Para salvar no final
+
+    while (fread(&byte, sizeof(U8), 1, file) == 1)
+    {
+        Code *code = tableOfCodes[byte];
+        for (int i = 0; i < code->size; ++i)
+        {
+            int realPos = (code->capacity - code->size) + i;
+            int byteIdx = realPos / 8;
+            int bitIdx  = 7 - (realPos & 7);
+            U8 bit = (code->byte[byteIdx] >> bitIdx) & 1;
+
+            currentByte <<= 1;
+            currentByte |= bit;
+            bitCount++;
+
+            if (bitCount == 8)
+            {
+                fwrite(&currentByte, sizeof(U8), 1, fileOut);
+                bitCount = 0;
+                currentByte = 0;
+            }
+        }
+    }
+
+    // Último byte incompleto
+    if (bitCount > 0)
+    {
+        currentByte <<= (8 - bitCount); // preenche com zeros à direita
+        fwrite(&currentByte, sizeof(U8), 1, fileOut);
+        lastByteBits = bitCount;
+    }
+    else
+    {
+        lastByteBits = 8;
+    }
+
+    // Escreve no final o número de bits úteis no último byte (1 byte extra)
+    fwrite(&lastByteBits, sizeof(U8), 1, fileOut);
+    
     fclose(file);
     fclose(fileOut);
     return 0;
@@ -112,12 +163,78 @@ int doEncode(char *fileName)
 
 int doDecode(char *fileName)
 {
-    return 1;
+    FILE *file = fopen(fileName, "rb");
+    if (!file) { return -1; }
+
+    /* 1. Leitura do cabeçalho */
+    U64 frequencies[256];
+    fileRead(file, frequencies);
+
+    /* 2. Reconstrução da árvore de Huffman */
+    PriorityQueue *pq = createQueueFromFrequencies(frequencies);
+    if (!pq)
+    {
+        fclose(file);
+        return -1;
+    }
+
+    NodePtr huffmanTree = buildHuffman(pq);
+    destroyQueue(pq);
+    if (!huffmanTree)
+    {
+        fclose(file);
+        return -1;
+    }
+
+    /* 3. Pega tamanho do arquivo e número de bits válidos no último byte */
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    fseek(file, -1, SEEK_END);
+    U8 lastByteBits;
+    fread(&lastByteBits, sizeof(U8), 1, file);
+
+    long totalBytes = fileSize - 2048 - 1; // tira cabeçalho (2048) e último byte extra
+
+    fseek(file, 2048, SEEK_SET); // vai direto pro início dos dados comprimidos
+
+    /* 4. Decodificação dos bits */
+    NodePtr current = huffmanTree;
+    FILE *fileOut = fopen("decompressed.txt", "wb");
+    if (!fileOut)
+    {
+        fclose(file);
+        freeNode(huffmanTree);
+        return -1;
+    }
+
+    for (long i = 0; i < totalBytes; ++i)
+    {
+        U8 byte;
+        fread(&byte, sizeof(U8), 1, file);
+
+        int bitsToRead = (i == totalBytes - 1) ? lastByteBits : 8;
+
+        for (int b = 7; b >= 8 - bitsToRead; --b)
+        {
+            U8 bit = (byte >> b) & 1;
+            current = bit ? current->right : current->left;
+
+            if (current->left == NULL && current->right == NULL)
+            {
+                fwrite(&current->character, sizeof(U8), 1, fileOut);
+                current = huffmanTree;
+            }
+        }
+    }
+
+    fclose(file);
+    fclose(fileOut);
+    freeNode(huffmanTree);
+    return 0;
 }
 
-PriorityQueue* read(FILE *file)
+PriorityQueue* read(FILE *file, U64 frequencies[256])
 {
-    U64 frequencies[256];
     readFrequencies(file, frequencies);
     return createQueueFromFrequencies(frequencies);
 }
@@ -225,3 +342,7 @@ void buildCodes(NodePtr node, Code* table[256], Code* current)
     buildCodes(node->right, table, current);
     if(!removeBit(current)) { return; } // remove(tenta) o bit 1 para ir pra esquerda da árvore
 }
+
+void fileWrite(FILE *file, U64 frequencies[256]) { fwrite(frequencies, sizeof(U64), 256, file); }
+
+void fileRead(FILE *file, U64 frequencies[256]) { fread(frequencies, sizeof(U64), 256, file); }
