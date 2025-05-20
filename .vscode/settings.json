@@ -1,6 +1,9 @@
 {
   "files.associations": {
-    "priorityqueue.h": "c"
+    "priorityqueue.h": "c",
+    "code.h": "c",
+    "mytypes.h": "c",
+    "string.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "clang",
   "C_Cpp_Runner.cppCompilerPath": "clang++",

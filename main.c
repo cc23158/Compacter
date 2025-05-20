@@ -16,8 +16,8 @@ int doEncode(char *fileName);
 int doDecode(char *fileName);
 
 PriorityQueue* read(FILE *file);
-void readFrequencies(FILE *file, U32 frequencies[256]);
-PriorityQueue* createQueueFromFrequencies(U32 frequencies[256]);
+void readFrequencies(FILE *file, U64 frequencies[256]);
+PriorityQueue* createQueueFromFrequencies(U64 frequencies[256]);
 NodePtr buildHuffman(PriorityQueue* pq);
 void buildCodes(NodePtr node, Code* table[256], Code* current);
 
@@ -92,7 +92,7 @@ int doEncode(char *fileName)
     FILE *fileOut = fopen(output, "wb");
     if(!fileOut)
     {
-        fclose(fileOut);
+        fclose(file);
         freeNode(huffmanTree);
         for(int i = 0; i < 256; ++i)
         {
@@ -104,8 +104,6 @@ int doEncode(char *fileName)
         }
         return -1;
     }
-    
-    
     
     fclose(file);
     fclose(fileOut);
@@ -119,12 +117,12 @@ int doDecode(char *fileName)
 
 PriorityQueue* read(FILE *file)
 {
-    U32 frequencies[256];
+    U64 frequencies[256];
     readFrequencies(file, frequencies);
     return createQueueFromFrequencies(frequencies);
 }
 
-void readFrequencies(FILE *file, U32 frequencies[256])
+void readFrequencies(FILE *file, U64 frequencies[256])
 {
     for(int i = 0; i < 256; i++) { frequencies[i] = 0; }
     U8 byte;
@@ -133,7 +131,7 @@ void readFrequencies(FILE *file, U32 frequencies[256])
     fseek(file, 0, SEEK_SET);
 }
 
-PriorityQueue* createQueueFromFrequencies(U32 frequencies[256])
+PriorityQueue* createQueueFromFrequencies(U64 frequencies[256])
 {
     PriorityQueue* pq = createQueue(256);
     if(!pq) { return NULL; }
