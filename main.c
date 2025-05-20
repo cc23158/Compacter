@@ -18,6 +18,7 @@ int doDecode(char *fileName);
 PriorityQueue* read(FILE *file);
 void readFrequencies(FILE *file, U32 frequencies[256]);
 PriorityQueue* createQueueFromFrequencies(U32 frequencies[256]);
+NodePtr buildHuffman(PriorityQueue* pq);
 void buildCodes(NodePtr node, Code* table[256], Code* current);
 
 int main(int argc, char *argv[])
@@ -33,34 +34,39 @@ int main(int argc, char *argv[])
 
 int doEncode(char *fileName)
 {
-    FILE *file = fopen(fileName, "rb+");
+    /* 1. Abertura do arquivo de leitura */
+    FILE *file = fopen(fileName, "rb");
     if(!file) { return -1; }
     
+    /* 2. Leitura das frequências dos caracteres + fila de prioridade */
     PriorityQueue* pq = read(file);
-    if(!pq) { return -1; }
-
-    while (pq->size > 1)
+    if(!pq)
     {
-        NodePtr node1 = dequeue(pq);
-        NodePtr node2 = dequeue(pq);
-        
-        NodePtr newNodeTree = newNode('\0', node1->frequency + node2->frequency);
-        newNodeTree->left = node1;
-        newNodeTree->right = node2;
-
-        enqueue(pq, newNodeTree);
+        fclose(file);
+        return -1;
     }
+
+    /* 3. Criação da árvore de Huffman */
+    NodePtr huffmanTree = buildHuffman(pq);
+    if(!huffmanTree)
+    {
+        fclose(file);
+        return -1;
+    }
+    destroyQueue(pq);
     
+    /* 4. Criação de códigos para cada caractere lido */
     Code* tableOfCodes[256] = {NULL};
     Code currentCode;
-    newCode(&currentCode);
-
-    buildCodes(dequeue(pq), tableOfCodes, &currentCode);
+    if(!newCode(&currentCode))
+    {
+        freeNode(huffmanTree);
+        fclose(file);
+        return -1;
+    }
+    buildCodes(huffmanTree, tableOfCodes, &currentCode);
     
-    fseek(file, 0, SEEK_SET);
-    
-    
-        
+    /* 4(teste). Impressão dos códigos no terminal */
     for (int b = 0; b < 256; ++b)
     {
         Code *code = tableOfCodes[b];
@@ -81,8 +87,28 @@ int doEncode(char *fileName)
         putchar('\n');
     }
     
-    destroyQueue(pq);
+    /* 5. Criação do arquivo de gravação */
+    const char *output = "compressed.huff";
+    FILE *fileOut = fopen(output, "wb");
+    if(!fileOut)
+    {
+        fclose(fileOut);
+        freeNode(huffmanTree);
+        for(int i = 0; i < 256; ++i)
+        {
+            if(tableOfCodes[i])
+            {
+                freeCode(tableOfCodes[i]);
+                free(tableOfCodes[i]);
+            }
+        }
+        return -1;
+    }
+    
+    
+    
     fclose(file);
+    fclose(fileOut);
     return 0;
 }
 
@@ -100,20 +126,21 @@ PriorityQueue* read(FILE *file)
 
 void readFrequencies(FILE *file, U32 frequencies[256])
 {
-    for (int i = 0; i < 256; i++) { frequencies[i] = 0; }
+    for(int i = 0; i < 256; i++) { frequencies[i] = 0; }
     U8 byte;
     
-    while (fread(&byte, sizeof(U8), 1, file) == 1) { frequencies[byte]++; }
+    while(fread(&byte, sizeof(U8), 1, file) == 1) { frequencies[byte]++; }
+    fseek(file, 0, SEEK_SET);
 }
 
 PriorityQueue* createQueueFromFrequencies(U32 frequencies[256])
 {
     PriorityQueue* pq = createQueue(256);
-    if (!pq) { return NULL; }
+    if(!pq) { return NULL; }
     
-    for (int i = 0; i < 256; i++)
+    for(int i = 0; i < 256; i++)
     {
-        if (frequencies[i] > 0)
+        if(frequencies[i] > 0)
         {
             U8 *ptr = malloc(sizeof(U8));
             *ptr = (U8)i;
@@ -121,28 +148,82 @@ PriorityQueue* createQueueFromFrequencies(U32 frequencies[256])
             enqueue(pq, newNode(*ptr, frequencies[i]));
         }
     }
-    
     return pq;
+}
+
+NodePtr buildHuffman(PriorityQueue* pq)
+{
+    if(!pq || isEmpty(pq)) { return NULL; }
+    
+    // fila com 1 nodo
+    if(pq->size == 1)
+    {
+        NodePtr root = dequeue(pq);
+        NodePtr newNodeTree = newNode('\0', root->frequency);
+        if(!newNodeTree)
+        {
+            free(root);
+            return NULL;
+        }
+        
+        newNodeTree->left = root;
+        enqueue(pq, newNodeTree);
+    }
+    
+    else
+    {
+        while(pq->size > 1)
+        {
+            NodePtr node1 = dequeue(pq);
+            NodePtr node2 = dequeue(pq);
+            if(!node1 || !node2)
+            {
+                if(node1) { free(node1); }
+                if(node2) { free(node2); }
+                return NULL;
+            }
+            
+            NodePtr newNodeTree = newNode('\0', node1->frequency + node2->frequency);
+            if(!newNodeTree)
+            {
+                free(node1);
+                free(node2);
+                return NULL;
+            }
+            
+            newNodeTree->left = node1;
+            newNodeTree->right = node2;
+    
+            enqueue(pq, newNodeTree);
+        }
+    }
+    return dequeue(pq);
 }
 
 void buildCodes(NodePtr node, Code* table[256], Code* current)
 {
-    if (!node) { return; }
+    if(!node) { return; }
 
     // se é folha, assimila o código ao caracter
-    if (node->left == NULL && node->right == NULL)
+    if(node->left == NULL && node->right == NULL)
     {
         Code* code = (Code*)malloc(sizeof(Code));
-        clone(*current, code);
+        if(!code) { return; }
+        
+        if(!clone(*current, code))
+        {
+            free(code);
+            return;
+        }
         table[node->character] = code;
         return;
     }
     
-    addBit(current, 0); // vai para a esquerda da árvore
+    if(!addBit(current, 0)) { return; } // vai(tenta) pra esquerda da árvore
     buildCodes(node->left, table, current);
-    removeBit(current); // remove o bit 0 para ir para a direita da árvore
+    if(!removeBit(current)) { return; } // remove(tenta) o bit 0 para ir pra direita da árvore
 
-    addBit(current, 1);
+    if(!addBit(current, 1)) { return; } // vai(tenta) pra direita da árvore
     buildCodes(node->right, table, current);
-    removeBit(current); // remove o bit 1 para ir para a esquerda da árvore
+    if(!removeBit(current)) { return; } // remove(tenta) o bit 1 para ir pra esquerda da árvore
 }

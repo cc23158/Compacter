@@ -21,6 +21,7 @@ typedef struct
 } PriorityQueue;
 
 NodePtr newNode(U8 character, U64 frequency);
+void freeNode(NodePtr node);
 
 PriorityQueue* createQueue(U64 capacity);
 void destroyQueue(PriorityQueue* pq);

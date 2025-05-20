@@ -1,6 +1,3 @@
-// https://www.geeksforgeeks.org/c-program-to-implement-priority-queue/
-// https://www.programiz.com/dsa/huffman-coding
-
 #include <stdlib.h>
 #include "PriorityQueue.h"
 
@@ -17,8 +14,16 @@ NodePtr newNode(U8 character, U64 frequency)
     new->frequency = frequency;
     new->left = NULL;
     new->right = NULL;
-
     return new;
+}
+
+void freeNode(NodePtr node)
+{
+    if(!node) { return; }
+    
+    freeNode(node->left);
+    freeNode(node->right);
+    free(node);
 }
 
 PriorityQueue* createQueue(U64 capacity)
@@ -77,11 +82,11 @@ NodePtr dequeue(PriorityQueue* pq)
 {
     if(!pq->size) { return NULL; }
 
-    NodePtr item = pq->data[0];         // armazena o elemento com menor frequência
+    NodePtr item = pq->data[0]; // armazena o elemento com menor frequência
     for(U32 i = 1; i < pq->size; i++) { pq->data[i - 1] = pq->data[i]; }
     pq->size--;
     
-    return item;                        // first-in, first-out
+    return item; // first-in, first-out
 }
 
 // troca os ponteiros de 2 nodos

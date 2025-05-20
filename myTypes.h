@@ -17,7 +17,8 @@ typedef float R32;        // de -3,4028235E+38 a 3.4028235E+38
 typedef double R64;       // de 2.2250738585072014E-308 a 1,7976931348623158E+308
 typedef long double R128; // de 0.24651903288156618919116517665087070E-31 a 0.1797693134862315907729305190789002575e+309
 
-typedef enum {
+typedef enum
+{
     false,
     true
 } boolean;
