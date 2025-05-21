@@ -6,6 +6,6 @@
 #include "../queue/PriorityQueue.h"
 #include "../algorithm/Huffman.h"
 
-void decode(FILE *inputFile, NodePtr huffmanTree);
+void decode(FILE *inputFile, NodePtr huffmanTree, char *outFileName);
 
 #endif

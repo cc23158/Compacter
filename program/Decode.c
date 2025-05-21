@@ -1,24 +1,32 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "Decode.h"
 
-void decode(FILE *inputFile, NodePtr huffmanTree)
+void decode(FILE *inputFile, NodePtr huffmanTree, char* outFileName)
 {
-    if(!inputFile || !huffmanTree) { return; }
+    if(!inputFile || !huffmanTree || !outFileName) { return; }
 
-    /* 3. Pega tamanho do arquivo e número de bits válidos no último byte */
+    // Tamanho total do arquivo
     fseek(inputFile, 0, SEEK_END);
     long fileSize = ftell(inputFile);
+
+    // Lê bits úteis no último byte
     fseek(inputFile, -1, SEEK_END);
     U8 lastByteBits;
     fread(&lastByteBits, sizeof(U8), 1, inputFile);
 
-    long totalBytes = fileSize - 2048 - 1; // tira cabeçalho (2048) e último byte extra
+    // Calcula posição de início dos dados
+    fseek(inputFile, 0, SEEK_SET);
+    U8 extLen;
+    fread(&extLen, sizeof(U8), 1, inputFile);
+    fseek(inputFile, extLen, SEEK_CUR); // pular extensão
+    fseek(inputFile, 256 * sizeof(U64), SEEK_CUR); // pular cabeçalho
 
-    fseek(inputFile, 2048, SEEK_SET); // vai direto pro início dos dados comprimidos
+    long dataStart = ftell(inputFile);
+    long totalBytes = fileSize - dataStart - 1; // -1 para byte extra
 
-    /* 4. Decodificação dos bits */
     NodePtr current = huffmanTree;
-    FILE *fileOut = fopen("decompressed.txt", "wb");
+    FILE *fileOut = fopen(outFileName, "wb");
     if (!fileOut)
     {
         fclose(inputFile);
