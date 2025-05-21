@@ -3,7 +3,10 @@
     "priorityqueue.h": "c",
     "code.h": "c",
     "mytypes.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "stdio.h": "c",
+    "stdlib.h": "c",
+    "huffman.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "clang",
   "C_Cpp_Runner.cppCompilerPath": "clang++",

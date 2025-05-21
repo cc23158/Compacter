@@ -9,8 +9,11 @@ Byte -> Frequência
 #include <string.h>
 
 #include "myTypes.h"
-#include "PriorityQueue/PriorityQueue.h"
-#include "Algorithm/Code.h"
+#include "queue/PriorityQueue.h"
+#include "algorithm/Code.h"
+#include "algorithm/Huffman.h"
+#include "file_io/file_io.h"
+
 
 int doEncode(char *fileName);
 int doDecode(char *fileName);
@@ -123,15 +126,15 @@ int doEncode(char *fileName)
         Code *code = tableOfCodes[byte];
         for (int i = 0; i < code->size; ++i)
         {
-            int realPos = (code->capacity - code->size) + i;
-            int byteIdx = realPos / 8;
-            int bitIdx  = 7 - (realPos & 7);
+            int byteIdx = i / 8;
+            int bitIdx  = 7 - (i % 8); // MSB-first
+    
             U8 bit = (code->byte[byteIdx] >> bitIdx) & 1;
-
+    
             currentByte <<= 1;
             currentByte |= bit;
             bitCount++;
-
+    
             if (bitCount == 8)
             {
                 fwrite(&currentByte, sizeof(U8), 1, fileOut);
@@ -140,6 +143,7 @@ int doEncode(char *fileName)
             }
         }
     }
+
 
     // Último byte incompleto
     if (bitCount > 0)
@@ -232,117 +236,3 @@ int doDecode(char *fileName)
     freeNode(huffmanTree);
     return 0;
 }
-
-PriorityQueue* read(FILE *file, U64 frequencies[256])
-{
-    readFrequencies(file, frequencies);
-    return createQueueFromFrequencies(frequencies);
-}
-
-void readFrequencies(FILE *file, U64 frequencies[256])
-{
-    for(int i = 0; i < 256; i++) { frequencies[i] = 0; }
-    U8 byte;
-    
-    while(fread(&byte, sizeof(U8), 1, file) == 1) { frequencies[byte]++; }
-    fseek(file, 0, SEEK_SET);
-}
-
-PriorityQueue* createQueueFromFrequencies(U64 frequencies[256])
-{
-    PriorityQueue* pq = createQueue(256);
-    if(!pq) { return NULL; }
-    
-    for(int i = 0; i < 256; i++)
-    {
-        if(frequencies[i] > 0)
-        {
-            U8 *ptr = malloc(sizeof(U8));
-            *ptr = (U8)i;
-            
-            enqueue(pq, newNode(*ptr, frequencies[i]));
-        }
-    }
-    return pq;
-}
-
-NodePtr buildHuffman(PriorityQueue* pq)
-{
-    if(!pq || isEmpty(pq)) { return NULL; }
-    
-    // fila com 1 nodo
-    if(pq->size == 1)
-    {
-        NodePtr root = dequeue(pq);
-        NodePtr newNodeTree = newNode('\0', root->frequency);
-        if(!newNodeTree)
-        {
-            free(root);
-            return NULL;
-        }
-        
-        newNodeTree->left = root;
-        enqueue(pq, newNodeTree);
-    }
-    
-    else
-    {
-        while(pq->size > 1)
-        {
-            NodePtr node1 = dequeue(pq);
-            NodePtr node2 = dequeue(pq);
-            if(!node1 || !node2)
-            {
-                if(node1) { free(node1); }
-                if(node2) { free(node2); }
-                return NULL;
-            }
-            
-            NodePtr newNodeTree = newNode('\0', node1->frequency + node2->frequency);
-            if(!newNodeTree)
-            {
-                free(node1);
-                free(node2);
-                return NULL;
-            }
-            
-            newNodeTree->left = node1;
-            newNodeTree->right = node2;
-    
-            enqueue(pq, newNodeTree);
-        }
-    }
-    return dequeue(pq);
-}
-
-void buildCodes(NodePtr node, Code* table[256], Code* current)
-{
-    if(!node) { return; }
-
-    // se é folha, assimila o código ao caracter
-    if(node->left == NULL && node->right == NULL)
-    {
-        Code* code = (Code*)malloc(sizeof(Code));
-        if(!code) { return; }
-        
-        if(!clone(*current, code))
-        {
-            free(code);
-            return;
-        }
-        table[node->character] = code;
-        return;
-    }
-    
-    if(!addBit(current, 0)) { return; } // vai(tenta) pra esquerda da árvore
-    buildCodes(node->left, table, current);
-    if(!removeBit(current)) { return; } // remove(tenta) o bit 0 para ir pra direita da árvore
-
-    if(!addBit(current, 1)) { return; } // vai(tenta) pra direita da árvore
-    buildCodes(node->right, table, current);
-    if(!removeBit(current)) { return; } // remove(tenta) o bit 1 para ir pra esquerda da árvore
-}
-
-void fileWrite(FILE *file, U64 frequencies[256]) { fwrite(frequencies, sizeof(U64), 256, file); }
-
-void fileRead(FILE *file, U64 frequencies[256]) { fread(frequencies, sizeof(U64), 256, file); }

@@ -22,61 +22,59 @@ void freeCode(Code* code)
 
 boolean addBit(Code* code, U8 value)
 {
-    // se chegou a capacidade máxima de bits, expande o array
-    if(code->size == code->capacity)
+    if (code->size == code->capacity)
     {
-        // aloca na memória 1 byte a mais
-        U8* new = (U8*)malloc((code->capacity / 8 + 1) * sizeof(U8));
-        if(new == NULL) { return false; }
+        int newByteCount = (code->capacity + 8) / 8;
+        U8* newBytes = (U8*)malloc(newByteCount);
+        if (!newBytes) return false;
 
-        for(int i = 0; i < code->size / 8; i++) { new[i] = code->byte[i]; }
+        // Copia os bytes antigos
+        for (int i = 0; i < code->capacity / 8; i++) {
+            newBytes[i] = code->byte[i];
+        }
+        // Zera o novo byte (caso tenha sido adicionado)
+        if (newByteCount > code->capacity / 8) {
+            newBytes[newByteCount - 1] = 0;
+        }
 
         free(code->byte);
-        code->byte = new;
-
+        code->byte = newBytes;
         code->capacity += 8;
     }
 
-    // joga 1 posição a esquerda e coloca 0 na direita
-    code->byte[code->capacity / 8 - 1] <<= 1;
+    int byteIndex = code->size / 8;
+    int bitOffset = 7 - (code->size % 8);  // MSB-first
 
-    if(value == 1) { code->byte[code->capacity / 8 - 1] |= 1; }
+    if (value == 1) {
+        code->byte[byteIndex] |= (1 << bitOffset);
+    } else {
+        code->byte[byteIndex] &= ~(1 << bitOffset);
+    }
 
     code->size++;
     return true;
 }
 
+
 boolean removeBit(Code* code)
 {
-    // se não há código, não pode remover bit
-    if (code->size == 0) { return false; }
-
-    // joga 1 posição a direita e coloca 0 na esquerda
-    code->byte[code->capacity / 8 - 1] >>= 1;
+    if (code->size == 0) return false;
     code->size--;
-
-    if(code->capacity > 8 && code->capacity - code->size == 8)
-    {
-        U8* new = (U8*)malloc((code->capacity / 8 - 1) * sizeof(U8));
-        if (new == NULL) { return false; }
-
-        for(int i = 0; i < code->size / 8; i++) { new[i] = code->byte[i]; }
-
-        free(code->byte);
-        code->byte = new;
-
-        code->capacity -= 8;
-    }
     return true;
 }
 
+
 boolean clone(Code original, Code* copy)
 {
-    copy->byte = (U8*)malloc(original.capacity * sizeof(U8));
-    if(copy->byte == NULL) { return false; }
+    int byteCount = (original.size + 7) / 8; // total de bytes usados
+    copy->byte = (U8*)malloc(byteCount);
+    if (!copy->byte) return false;
 
-    for(int i = 0; i < original.capacity / 8; i++) { copy->byte[i] = original.byte[i]; }
-    copy->capacity = original.capacity;
+    for (int i = 0; i < byteCount; i++) {
+        copy->byte[i] = original.byte[i];
+    }
+
+    copy->capacity = byteCount * 8;
     copy->size = original.size;
     return true;
 }

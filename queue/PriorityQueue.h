@@ -5,19 +5,19 @@
 
 typedef struct Node
 {
-    U8 character;  // caracter
-    U64 frequency; // quantidades de aparições
+    U8 character;  // character
+    U64 frequency; // number of appearances
     struct Node* left;
     struct Node* right;
 } Node;
 
-typedef Node* NodePtr; // ponteiro para um nodo
+typedef Node* NodePtr; // node pointer
 
 typedef struct
 {
     NodePtr *data;
-    U64 size;     // capacidade real
-    U64 capacity; // capacidade total
+    U64 size;     // capacity in usage
+    U64 capacity; // total capacity
 } PriorityQueue;
 
 NodePtr newNode(U8 character, U64 frequency);

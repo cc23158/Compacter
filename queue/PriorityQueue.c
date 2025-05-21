@@ -3,12 +3,12 @@
 
 static void swap(NodePtr* a, NodePtr* b);
 
-// cria um novo nodo
+// create new node
 NodePtr newNode(U8 character, U64 frequency)
 {
-    // aloca memória para o novo nodo
+    // allocate memory for the new node
     NodePtr new = (NodePtr)malloc(sizeof(Node));
-    if(!new) { return NULL; } // verifica se a memória do nodo foi alocada com sucesso
+    if(!new) { return NULL; }
 
     new->character = character;
     new->frequency = frequency;
@@ -17,23 +17,25 @@ NodePtr newNode(U8 character, U64 frequency)
     return new;
 }
 
+// free the memory of a node
 void freeNode(NodePtr node)
 {
     if(!node) { return; }
     
+    // free memory of its subtrees before itself
     freeNode(node->left);
     freeNode(node->right);
     free(node);
 }
 
+// create a priority queue
 PriorityQueue* createQueue(U64 capacity)
 {
-    // aloca memória para a fila de prioridade e verifica
-    // se a memória foi alocada com sucesso
+    // allocate memory for the priority queue
     PriorityQueue* pq = (PriorityQueue*)malloc(sizeof(PriorityQueue));
     if(!pq) { return NULL; }
 
-    // aloca memória para o array de ponteiros de nodos baseado na capacidade dada
+    // allocate memory to queue's array of <capacity> node pointers
     pq->data = (NodePtr*)malloc(sizeof(NodePtr) * capacity);
     if(!pq->data)
     {
@@ -46,7 +48,7 @@ PriorityQueue* createQueue(U64 capacity)
     return pq;
 }
 
-// destrói a fila de prioridade
+// free the priority queue
 void destroyQueue(PriorityQueue* pq)
 {
     if(pq)
@@ -56,21 +58,23 @@ void destroyQueue(PriorityQueue* pq)
     }
 }
 
-// retorna se está vazia
+// return whether the queue is empty
 boolean isEmpty(PriorityQueue* pq) { return pq->size == 0; }
 
-// retorna se está cheia
+// return whether the queue is full
 boolean isFull(PriorityQueue* pq) { return pq->size == pq->capacity; }
 
-// insere um elemento na fila de prioridade
+// add a new node to the queue
 void enqueue(PriorityQueue* pq, NodePtr node)
 {
-    // se a fila está cheia, não se pode inserir elementos
+    // if the queue is full, cannot add more nodes
     if(isFull(pq)) { return; }
 
-    U32 i = pq->size++;
+    // add node at the last position
+    U64 i = pq->size++;
     pq->data[i] = node;
     
+    // bubble sort by frequency
     while(i > 0 && pq->data[i]->frequency < pq->data[i - 1]->frequency)
     {
         swap(&pq->data[i], &pq->data[i - 1]);
@@ -78,18 +82,22 @@ void enqueue(PriorityQueue* pq, NodePtr node)
     }
 }
 
+// remove node with highest priority (<<frequency)
 NodePtr dequeue(PriorityQueue* pq)
 {
+    // if the queue is empty, return NULL
     if(!pq->size) { return NULL; }
 
-    NodePtr item = pq->data[0]; // armazena o elemento com menor frequência
-    for(U32 i = 1; i < pq->size; i++) { pq->data[i - 1] = pq->data[i]; }
+    NodePtr item = pq->data[0];
+
+    // shift remaining nodes to the left
+    for(U64 i = 1; i < pq->size; i++) { pq->data[i - 1] = pq->data[i]; }
     pq->size--;
     
-    return item; // first-in, first-out
+    return item;
 }
 
-// troca os ponteiros de 2 nodos
+// swap 2 node pointers
 static void swap(NodePtr* a, NodePtr* b)
 {
     NodePtr temp = *a;
