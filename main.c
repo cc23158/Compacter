@@ -1,31 +1,17 @@
-/*
-Num de bits para considere no último byte.
-Num de bytes diferentes na tabela de frequência.
-Byte -> Frequência
-*/
-
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "myTypes.h"
 #include "queue/PriorityQueue.h"
 #include "algorithm/Code.h"
 #include "algorithm/Huffman.h"
 #include "file_io/file_io.h"
-
+#include "program/Encode.h"
+#include "program/Decode.h"
 
 int doEncode(char *fileName);
 int doDecode(char *fileName);
-
-PriorityQueue* read(FILE *file, U64 frequencies[256]);
-void readFrequencies(FILE *file, U64 frequencies[256]);
-PriorityQueue* createQueueFromFrequencies(U64 frequencies[256]);
-NodePtr buildHuffman(PriorityQueue* pq);
-void buildCodes(NodePtr node, Code* table[256], Code* current);
-
-void fileWrite(FILE *file, U64 frequencies[256]);
-void fileRead(FILE *file, U64 frequencies[256]);
 
 int main(int argc, char *argv[])
 {
@@ -115,50 +101,7 @@ int doEncode(char *fileName)
     /* 6. Escrita do cabeçalho */
     fileWrite(fileOut, frequencies);
     
-    /* 7. Codificação do arquivo */
-    U8 byte;
-    U8 currentByte = 0;
-    int bitCount = 0;
-    int lastByteBits = 0; // Para salvar no final
-
-    while (fread(&byte, sizeof(U8), 1, file) == 1)
-    {
-        Code *code = tableOfCodes[byte];
-        for (int i = 0; i < code->size; ++i)
-        {
-            int byteIdx = i / 8;
-            int bitIdx  = 7 - (i % 8); // MSB-first
-    
-            U8 bit = (code->byte[byteIdx] >> bitIdx) & 1;
-    
-            currentByte <<= 1;
-            currentByte |= bit;
-            bitCount++;
-    
-            if (bitCount == 8)
-            {
-                fwrite(&currentByte, sizeof(U8), 1, fileOut);
-                bitCount = 0;
-                currentByte = 0;
-            }
-        }
-    }
-
-
-    // Último byte incompleto
-    if (bitCount > 0)
-    {
-        currentByte <<= (8 - bitCount); // preenche com zeros à direita
-        fwrite(&currentByte, sizeof(U8), 1, fileOut);
-        lastByteBits = bitCount;
-    }
-    else
-    {
-        lastByteBits = 8;
-    }
-
-    // Escreve no final o número de bits úteis no último byte (1 byte extra)
-    fwrite(&lastByteBits, sizeof(U8), 1, fileOut);
+    encode(file, fileOut, huffmanTree, tableOfCodes);
     
     fclose(file);
     fclose(fileOut);
@@ -190,49 +133,9 @@ int doDecode(char *fileName)
         return -1;
     }
 
-    /* 3. Pega tamanho do arquivo e número de bits válidos no último byte */
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    fseek(file, -1, SEEK_END);
-    U8 lastByteBits;
-    fread(&lastByteBits, sizeof(U8), 1, file);
-
-    long totalBytes = fileSize - 2048 - 1; // tira cabeçalho (2048) e último byte extra
-
-    fseek(file, 2048, SEEK_SET); // vai direto pro início dos dados comprimidos
-
-    /* 4. Decodificação dos bits */
-    NodePtr current = huffmanTree;
-    FILE *fileOut = fopen("decompressed.txt", "wb");
-    if (!fileOut)
-    {
-        fclose(file);
-        freeNode(huffmanTree);
-        return -1;
-    }
-
-    for (long i = 0; i < totalBytes; ++i)
-    {
-        U8 byte;
-        fread(&byte, sizeof(U8), 1, file);
-
-        int bitsToRead = (i == totalBytes - 1) ? lastByteBits : 8;
-
-        for (int b = 7; b >= 8 - bitsToRead; --b)
-        {
-            U8 bit = (byte >> b) & 1;
-            current = bit ? current->right : current->left;
-
-            if (current->left == NULL && current->right == NULL)
-            {
-                fwrite(&current->character, sizeof(U8), 1, fileOut);
-                current = huffmanTree;
-            }
-        }
-    }
+    decode(file, huffmanTree);
 
     fclose(file);
-    fclose(fileOut);
     freeNode(huffmanTree);
     return 0;
 }

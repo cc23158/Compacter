@@ -6,7 +6,10 @@
     "string.h": "c",
     "stdio.h": "c",
     "stdlib.h": "c",
-    "huffman.h": "c"
+    "huffman.h": "c",
+    "file_io.h": "c",
+    "decode.h": "c",
+    "encode.h": "c"
   },
   "C_Cpp_Runner.cCompilerPath": "clang",
   "C_Cpp_Runner.cppCompilerPath": "clang++",
