@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "Huffman.h"
 
-// create a priority queue from frequencies array
+// create a priority queue from the frequency array
 PriorityQueue* createQueueFromFrequencies(U64 frequencies[256])
 {
     PriorityQueue* pq = createQueue(256);
@@ -11,6 +11,7 @@ PriorityQueue* createQueueFromFrequencies(U64 frequencies[256])
     {
         if(frequencies[i] > 0)
         {
+            // allocate memory for the character
             U8 *ptr = malloc(sizeof(U8));
             *ptr = (U8)i;
             
@@ -20,10 +21,10 @@ PriorityQueue* createQueueFromFrequencies(U64 frequencies[256])
     return pq;
 }
 
-// build Huffman tree
+// build and return the Huffman tree
 NodePtr buildHuffman(PriorityQueue* pq)
 {
-    // if there's no queue or its empty, return null
+    // if there's no queue or it's empty, return null
     if(!pq || isEmpty(pq)) { return NULL; }
     
     // only 1 node
@@ -73,13 +74,13 @@ NodePtr buildHuffman(PriorityQueue* pq)
     return dequeue(pq); // return the Huffman tree
 }
 
-// build the characters codes
+// build the character codes
 void buildCodes(NodePtr node, Code* table[256], Code* current)
 {
-    // if the node value is null, stop the cycle
+    // if the node is null, stop the cycle
     if(!node) { return; }
 
-    // if is a leaf, link the code with the character
+    // if it is a leaf, link the code with the character
     if(node->left == NULL && node->right == NULL)
     {
         Code* code = (Code*)malloc(sizeof(Code));
@@ -96,9 +97,9 @@ void buildCodes(NodePtr node, Code* table[256], Code* current)
     
     if(!addBit(current, 0)) { return; } // goes to left subtree
     buildCodes(node->left, table, current);
-    if(!removeBit(current)) { return; } // remove bit 0 to continue in right subtree
+    if(!removeBit(current)) { return; } // remove bit 0 to backtrack after visiting the left subtree
 
     if(!addBit(current, 1)) { return; } // goes to right subtree
     buildCodes(node->right, table, current);
-    if(!removeBit(current)) { return; } // remove bit 1 to continue in left subtree
+    if(!removeBit(current)) { return; } // remove bit 1 to backtrack after visiting the right subtree
 }

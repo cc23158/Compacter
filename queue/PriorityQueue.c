@@ -35,7 +35,7 @@ PriorityQueue* createQueue(U64 capacity)
     PriorityQueue* pq = (PriorityQueue*)malloc(sizeof(PriorityQueue));
     if(!pq) { return NULL; }
 
-    // allocate memory to queue's array of <capacity> node pointers
+    // allocate memory for the queue's array of <capacity> node pointers
     pq->data = (NodePtr*)malloc(sizeof(NodePtr) * capacity);
     if(!pq->data)
     {
@@ -82,7 +82,7 @@ void enqueue(PriorityQueue* pq, NodePtr node)
     }
 }
 
-// remove node with highest priority (<<frequency)
+// remove node with the highest priority (<<frequency)
 NodePtr dequeue(PriorityQueue* pq)
 {
     // if the queue is empty, return NULL

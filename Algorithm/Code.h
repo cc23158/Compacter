@@ -5,9 +5,9 @@
 
 typedef struct
 {
-    U8* byte;    // dynamic array of code
-    U8 capacity; // bits
-    U8 size;     // bits
+    U8* byte;    // dynamic array of code bits
+    U8 capacity; // total capacity in bits
+    U8 size;     // current number of bits used
 } Code;
 
 boolean newCode(Code* code);

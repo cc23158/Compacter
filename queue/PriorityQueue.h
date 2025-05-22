@@ -16,7 +16,7 @@ typedef Node* NodePtr; // node pointer
 typedef struct
 {
     NodePtr *data;
-    U64 size;     // capacity in usage
+    U64 size;     // number of elements
     U64 capacity; // total capacity
 } PriorityQueue;
 
